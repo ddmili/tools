@@ -1,0 +1,6 @@
+runtime.log
+.idea/*
+go.sum
+*.exe
+.vscode
+server.yaml

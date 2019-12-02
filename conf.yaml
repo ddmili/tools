@@ -1,9 +1,13 @@
-cache:
-  enable : false
-  list : [redis,mongoDB]
-mysql:
-  user : root
-  password : Tech2501
-  host : 10.11.22.33
-  port : 3306
-  name : cwi
+server:
+  qa:
+    user: root
+    password: 123456
+    hostname: 10.1.11.1
+    port: 57522
+    server_name: qa
+  prv:
+    user: root
+    password: 123456
+    hostname: 10.1.11.2
+    port: 3306
+    server_name: prv
