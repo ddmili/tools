@@ -21,8 +21,28 @@ func (s *Server) Init() {
 	s.output = make(chan Message, 255)
 }
 
+// Use 选中当前服务器
+func (s *Server) Use() {
+	fmt.Println("当前服务器", s.ServerName)
+	s.Pwd()
+}
+
+// Pwd 查看当前目录
+func (s *Server) Pwd() {
+	s.Execute("pwd")
+}
+
+// Tail 查看日志
 func (s *Server) Tail(file string) {
-	script := fmt.Sprintf("tail -f %s", file)
+	s.Execute(fmt.Sprintf("tail -f %s", file))
+}
+
+func (s *Server) Execute(script string) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf(console.ColorfulText(console.TextRed, "Error: %s\n"), err)
+		}
+	}()
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -31,7 +51,6 @@ func (s *Server) Tail(file string) {
 		}()
 		s.cmd.Execute(script)
 	}()
-
 	go func() {
 		for output := range s.output {
 			content := strings.Trim(output.Content, "\r\n")
@@ -48,12 +67,4 @@ func (s *Server) Tail(file string) {
 			)
 		}
 	}()
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Printf(console.ColorfulText(console.TextRed, "Error: %s\n"), err)
-		}
-	}()
-	cmd := NewCommand(s)
-
-	cmd.Execute(fmt.Sprintf("tail -f %s", file))
 }

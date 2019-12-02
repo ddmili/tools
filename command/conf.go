@@ -6,7 +6,6 @@ import (
 	"log"
 )
 
-
 type Yaml struct {
 	Server map[string]Server
 }

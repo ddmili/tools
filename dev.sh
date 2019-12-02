@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-go run main.go -conf conf.yaml
+go run main.go -conf server.yaml

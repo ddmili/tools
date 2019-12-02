@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"tools/command"
 	"tools/console"
 )
@@ -50,9 +52,47 @@ func main() {
 	}
 	fmt.Println(welcomeMessage)
 	config := command.ParseConf(*configFile)
+	fmt.Println("请选择服务器:")
 	for name, s := range config.Server {
-		fmt.Printf("请选择服务器 %s \n", name)
+		fmt.Printf("   %s \n", name)
 		s.Init()
+	}
+	var currentServer *command.Server
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		cmdString, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			continue
+		}
+		cmdS := strings.Split(cmdString, " ")
+
+		cmdString = strings.TrimSuffix(cmdString, "\n")
+		cmdString = strings.TrimSuffix(cmdString, "\r")
+		if cmdString == "" {
+			fmt.Println("请输入正确的指令~")
+			continue
+		}
+
+		if strings.Index(cmdString, "change") != -1 {
+			name := strings.Trim(cmdString[7:], " ")
+			server, ok := config.Server[name]
+			if ok {
+				server.Use()
+			} else {
+				fmt.Println("服务器名称错误")
+			}
+			continue
+		}
+
+		if currentServer == nil {
+			fmt.Println("请选择服务器")
+			continue
+		}
+		if cmdString == "pwd" {
+			fmt.Println("请输入正确的指令~")
+			continue
+		}
 	}
 	fmt.Printf("\n%s\n", console.ColorfulText(console.TextCyan, mossSep))
 
