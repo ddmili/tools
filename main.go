@@ -8,21 +8,18 @@ import (
 	"strings"
 	"tools/command"
 	"tools/console"
+	"tools/service"
 )
 
 var mossSep = "------------------------------------------------ \n"
 
 var welcomeMessage = getWelcomeMessage() + console.ColorfulText(console.TextMagenta, mossSep)
 
-//var filePath = flag.String("file", "", "-file=\"/var/log/*.log\"")
-//var hostStr = flag.String("hosts", "", "-hosts=root@192.168.1.101,root@192.168.1.102")
-var configFile = flag.String("conf", "", "-conf=conf.yaml")
+//var configFile = flag.String("conf", "", "-conf=conf.yaml")
+var configFile = "server.yaml"
 
-//var tailFlags = flag.String("tail-flags", "--retry --follow=name", "flags for tail command, you can use -f instead if your server does't support `--retry --follow=name` flags")
-//var slient = flag.Bool("slient", false, "-slient=false")
-
-var Version = ""
-var GitCommit = ""
+var Version = "v0.0.1"
+var GitCommit = "v0.0.1"
 
 // usageAndExit 退出
 func usageAndExit(message string) {
@@ -37,6 +34,11 @@ func usageAndExit(message string) {
 	os.Exit(1)
 }
 
+// currentServer 当前服务
+var currentServer *command.Server
+
+var config *command.Yaml
+
 func main() {
 
 	flag.Usage = func() {
@@ -45,57 +47,64 @@ func main() {
 		flag.PrintDefaults()
 	}
 
-	flag.Parse()
+	//flag.Parse()
 
-	if *configFile == "" {
-		usageAndExit("配置文件为空")
-	}
+	//if *configFile == "" {
+	//	usageAndExit("配置文件为空")
+	//}
 	fmt.Println(welcomeMessage)
-	config := command.ParseConf(*configFile)
+	config = command.ParseConf(configFile)
 	fmt.Println("请选择服务器:")
-	for name, s := range config.Server {
-		fmt.Printf("   %s \n", name)
-		s.Init()
+	for _, v := range config.Server {
+		fmt.Printf("   %s \n", v.ServerName)
 	}
-	var currentServer *command.Server
+
+	registerHandler()
+
 	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("\n>>")
 	for {
+
 		cmdString, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
-		cmdS := strings.Split(cmdString, " ")
 
-		cmdString = strings.TrimSuffix(cmdString, "\n")
-		cmdString = strings.TrimSuffix(cmdString, "\r")
-		if cmdString == "" {
-			fmt.Println("请输入正确的指令~")
+		cmd, err := service.AnalysisCmd(cmdString)
+		if err != nil {
+			fmt.Println(err.Error())
 			continue
 		}
-
-		if strings.Index(cmdString, "change") != -1 {
-			name := strings.Trim(cmdString[7:], " ")
-			server, ok := config.Server[name]
-			if ok {
-				server.Use()
-			} else {
-				fmt.Println("服务器名称错误")
-			}
-			continue
-		}
-
-		if currentServer == nil {
-			fmt.Println("请选择服务器")
-			continue
-		}
-		if cmdString == "pwd" {
-			fmt.Println("请输入正确的指令~")
-			continue
-		}
+		cmd.Run()
 	}
 	fmt.Printf("\n%s\n", console.ColorfulText(console.TextCyan, mossSep))
 
+}
+
+// registerHandler 注册命令服务
+func registerHandler() {
+	service.RegisterService("change", func(param []string) error {
+		if len(param) != 1 {
+			return fmt.Errorf("请选中服务器名称")
+		}
+		s, ok := config.Server[param[0]]
+		if !ok {
+			return fmt.Errorf("服务器名称错误")
+		}
+		currentServer = &s
+		currentServer.Init()
+		currentServer.Ping()
+		fmt.Println("切换服务器-" + currentServer.ServerName)
+		return nil
+	})
+	service.RegisterService("pm2", func(param []string) error {
+		if currentServer == nil {
+			return fmt.Errorf("请选择服务器")
+		}
+		currentServer.Execute("pm2 " + strings.Join(param, " "))
+		return nil
+	})
 }
 
 func getWelcomeMessage() string {

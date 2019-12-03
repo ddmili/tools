@@ -3,4 +3,5 @@ runtime.log
 go.sum
 *.exe
 .vscode
+tmp
 server.yaml
