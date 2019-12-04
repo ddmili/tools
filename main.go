@@ -109,11 +109,11 @@ func registerHandler() {
 
 func getWelcomeMessage() string {
 	return `
- _____ 				  _
+ _____ 		      _    
 |_   _|  ___    ___  | |
   | |   / _ \  / _ \ | |
-  | |  | (_) || (_) || |
-  |_|   \___/  \___/ |_|
+  | |  | (_) || (_) || | 
+  |_|   \___/  \___/ |_|   
 Author: song
 Homepage: github.com/disciple-song/tools
 Version: ` + Version + "(" + GitCommit + ")" + `
